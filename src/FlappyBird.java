@@ -12,14 +12,15 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
     Image birdyImg;
     Image topPipeImg;
     Image bottomPipeImg;
+    Image loseImg;
 
     int birdX = boardWidth/8;
     int birdY = boardHeight/2;
     int birdWidth = 34;
     int birdHeight = 24;
-    int xVelocity = -4;
+    int xVelocity = 0;
     int yVelocity = 0;
-    int gravity = 1;
+    int gravity = 0;
 
     Bird bird;
     Timer gameLoopTimer;
@@ -34,6 +35,10 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
     boolean gameOver = false;
     double score = 0;
+    boolean gameStarted = false;
+
+    JButton playAgain = new JButton("Play again?");
+
 
     class Pipe {
         int x = pipeX;
@@ -66,6 +71,7 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
         birdyImg = new ImageIcon(getClass().getResource("./flappybird.png")).getImage();
         topPipeImg = new ImageIcon(getClass().getResource("./toppipe.png")).getImage();
         bottomPipeImg = new ImageIcon(getClass().getResource("./bottompipe.png")).getImage();
+        loseImg = new ImageIcon(getClass().getResource("./lose screen.png")).getImage();
 
         setPreferredSize(new Dimension(boardWidth, boardHeight));
         setBackground(Color.green);
@@ -82,11 +88,25 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
                 placePipes();
             }
         });
-        placePipeTimer.start();
-
         gameLoopTimer = new Timer(1000/60, this);
-        gameLoopTimer.start();
 
+        playAgain.addActionListener(e -> {
+            if (!gameStarted){
+                gameStarted = true;
+                System.out.println(".()");
+                playAgain.setVisible(false);
+                score = 0;
+                pipes.clear();
+                bird.x = birdX;
+                bird.y = birdY;
+                start();
+            }
+        });
+
+        setLayout(null);
+        playAgain.setBounds(120, 250, 120, 40);
+        add(playAgain);
+        playAgain.setVisible(false);
     }
 
     public void placePipes() {
@@ -119,12 +139,23 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
             if (collision(bird, pipe)){
                 gameOver = true;
+                gameStarted = false;
             }
         }
 
         if (bird.y > boardHeight){
             gameOver = true;
+            gameStarted = false;
         }
+    }
+
+    public void start(){
+        xVelocity = -4;
+        yVelocity = 0;
+        gravity = 1;
+        gameOver = false;
+        placePipeTimer.start();
+        gameLoopTimer.start();
     }
 
     public boolean collision(Bird bird, Pipe pipe){
@@ -147,15 +178,16 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
         g.setColor(Color.white);
         g.setFont(new Font("Arial", Font.PLAIN, 32));
         if (gameOver) {
-            g.drawString("Game Over: " + String.valueOf((int) score), 10, 35);
+            g.drawImage(loseImg, 0, 0, boardWidth, boardHeight, null);
+            g.setFont(new Font("Arial", Font.PLAIN, 28));
+            g.drawString("Game Over: " + String.valueOf((int) score), 100, 150);
             
         } else{
             g.drawString(String.valueOf((int) score ), 10, 35);
         }
     }
-
-    public void paint(Graphics g) {
-        super.paint(g);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         draw(g);
     }
 
@@ -164,8 +196,11 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
         move();
         repaint();
         if (gameOver){
+            System.out.println("death");
             placePipeTimer.stop();
             gameLoopTimer.stop();
+            playAgain.setVisible(true);
+
         }
     }
 
@@ -174,8 +209,14 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE){
-            yVelocity =  -9;
+        if (!gameOver){
+            if (e.getKeyCode() == KeyEvent.VK_SPACE){
+                if(!gameStarted){
+                    gameStarted = true;
+                    start();
+                }
+                yVelocity =  -9;
+            }
         }
     }
 
